@@ -1,7 +1,9 @@
+"use client";
+
+import { InputTypes } from "@/app/components/StyledInput/InputTypes";
+import StyledInput from "@/app/components/StyledInput/StyledInput";
+import ToggleSwitch from "@/app/components/ToggleSwitch/ToggleSwitch";
 import { FC } from "react";
-import { InputTypes } from "~/components/StyledInput/InputTypes";
-import StyledInput from "~/components/StyledInput/StyledInput";
-import ToggleSwitch from "~/components/ToggleSwitch/ToggleSwitch";
 
 const InputGroup: FC<InputGroupProps> = ({
   isEts,

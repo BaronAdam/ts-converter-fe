@@ -1,3 +1,5 @@
+"use client";
+
 import { FC } from "react";
 import { InputTypes } from "./InputTypes";
 import { StyledInputProps } from "./StyledInputProps";

@@ -1,11 +1,11 @@
+"use client";
+
 import { FC, useState } from "react";
-import ResultDisplay from "~/components/ResultDisplay/ResultDisplay";
-import StyledButton from "~/components/StyledButton/StyledButton";
 import InputGroup from "./InputGroup/InputGroup";
-import {
-  getAtsConvertedTimeForCity,
-  getAtsConvertedTimeForOutsideOfCity,
-} from "~/api/clients/AtsConvertClient";
+import { getAtsConvertedTimeForCity, getAtsConvertedTimeForOutsideOfCity } from "@/app/api/clients/AtsConvertClient";
+import StyledButton from "@/app/components/StyledButton/StyledButton";
+import ResultDisplay from "@/app/components/ResultDisplay/ResultDisplay";
+
 
 const TsConverter: FC = () => {
   const [isEts, setIsEts] = useState<boolean>(false);
