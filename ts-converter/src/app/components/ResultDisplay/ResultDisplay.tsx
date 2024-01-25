@@ -1,3 +1,5 @@
+"use client";
+
 import { FC } from "react";
 
 const ResultDisplay: FC<ResultDisplayProps> = ({ hours, minutes }) => {
