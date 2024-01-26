@@ -2,8 +2,6 @@ import { handleTimeConverterRequest } from "../helpers/TimeConverterRequestHelpe
 
 const baseUrl: string = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
-console.log(baseUrl);
-
 export const getAtsConvertedTimeForCity = async (
   minutes: number,
 ): Promise<TimeConverterDto | null> => {
