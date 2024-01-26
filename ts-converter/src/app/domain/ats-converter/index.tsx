@@ -5,6 +5,7 @@ import InputGroup from "./InputGroup/InputGroup";
 import { getAtsConvertedTimeForCity, getAtsConvertedTimeForOutsideOfCity } from "@/app/api/clients/AtsConvertClient";
 import StyledButton from "@/app/components/StyledButton/StyledButton";
 import ResultDisplay from "@/app/components/ResultDisplay/ResultDisplay";
+import { getEtsConvertedTimeForCity, getEtsConvertedTimeForOutsideOfCityMainland, getEtsConvertedTimeForOutsideOfCityUk } from "@/app/api/clients/EtsConvertClient";
 
 
 const TsConverter: FC = () => {
@@ -50,9 +51,19 @@ const TsConverter: FC = () => {
       ? 0
       : hours * 60) + (isNaN(minutes) ? 0 : minutes);
 
-    const response = isInCity
-      ? await getAtsConvertedTimeForCity(totalMinutes)
-      : await getAtsConvertedTimeForOutsideOfCity(totalMinutes);
+    let response: TimeConverterDto | null = null
+    if (isEts) {
+      response = isInCity
+        ? await getEtsConvertedTimeForCity(totalMinutes)
+        : isUk
+          ? await getEtsConvertedTimeForOutsideOfCityUk(totalMinutes)
+          : await getEtsConvertedTimeForOutsideOfCityMainland(totalMinutes)
+    }
+    else {
+      response = isInCity
+        ? await getAtsConvertedTimeForCity(totalMinutes)
+        : await getAtsConvertedTimeForOutsideOfCity(totalMinutes);
+    }
     setResult(response);
   };
 

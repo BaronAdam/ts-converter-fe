@@ -38,8 +38,7 @@ const InputGroup: FC<InputGroupProps> = ({
       <ToggleSwitch
         labelTextActive="Convert for ETS"
         labelTextInactive="Convert for ATS"
-        disabled={true}
-        // disabled={isUk}
+        disabled={isUk}
         callback={handleGameChange}
       ></ToggleSwitch>
       {isEts ? (
