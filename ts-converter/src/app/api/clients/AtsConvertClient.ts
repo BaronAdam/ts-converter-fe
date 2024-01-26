@@ -1,5 +1,5 @@
-// const baseUrl: string = "https://ts-convert.azurewebsites.net"
-const baseUrl: string = "http://localhost:7071";
+const baseUrl: string = "https://ts-convert.azurewebsites.net";
+// const baseUrl: string = "http://localhost:7071";
 
 export const getAtsConvertedTimeForCity = async (
   minutes: number
