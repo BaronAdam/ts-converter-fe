@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Truck Sim Converter",
   description: "Simple app to convert ingame time to real time",
+  manifest: "/manifest.json"
 };
 
 export default function RootLayout({
