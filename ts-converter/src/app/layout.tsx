@@ -35,6 +35,8 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
         <link rel="icon" type="image/png" sizes="84x384" href="/icons/icon-384x384.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png" />
+
+        <link rel='shortcut icon' href='/favicon.ico' />
       </head>
       <body className={inter.className}>{children}</body>
     </html>
