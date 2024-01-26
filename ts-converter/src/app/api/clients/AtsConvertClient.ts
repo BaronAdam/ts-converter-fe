@@ -1,7 +1,8 @@
 import { handleTimeConverterRequest } from "../helpers/TimeConverterRequestHelper";
 
-const baseUrl: string = "https://ts-convert.azurewebsites.net";
-// const baseUrl: string = "http://localhost:7071";
+const baseUrl: string = process.env.NEXT_PUBLIC_API_BASE_URL!;
+
+console.log(baseUrl);
 
 export const getAtsConvertedTimeForCity = async (
   minutes: number,
