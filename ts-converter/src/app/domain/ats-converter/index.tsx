@@ -46,9 +46,9 @@ const TsConverter: FC = () => {
     const minutes = parseInt(minutesValue);
     const hours = parseInt(hoursValue);
 
-    const totalMinutes = isNaN(hours)
+    const totalMinutes = (isNaN(hours)
       ? 0
-      : hours * 60 + (isNaN(minutes) ? 0 : minutes);
+      : hours * 60) + (isNaN(minutes) ? 0 : minutes);
 
     const response = isInCity
       ? await getAtsConvertedTimeForCity(totalMinutes)
