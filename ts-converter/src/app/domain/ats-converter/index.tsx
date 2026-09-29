@@ -1,6 +1,7 @@
 "use client";
 
 import { FC, useState } from "react";
+import { normalizeHours, normalizeMinutes, toTotalMinutes } from "./timeInput";
 import InputGroup from "./InputGroup/InputGroup";
 import { getAtsConvertedTimeForCity, getAtsConvertedTimeForOutsideOfCity } from "@/app/api/clients/AtsConvertClient";
 import StyledButton from "@/app/components/StyledButton/StyledButton";
@@ -18,6 +19,9 @@ const TsConverter: FC = () => {
 
   const handleGameChange = (isChecked: boolean): void => {
     setIsEts(isChecked);
+    if (!isChecked) {
+      setIsUk(false);
+    }
   };
 
   const handleUkChange = (isChecked: boolean): void => {
@@ -29,27 +33,15 @@ const TsConverter: FC = () => {
   };
 
   const handleMinutesChange = (minutes: string): void => {
-    const converted = parseInt(minutes);
-
-    let result = converted < 0 ? 0 : converted;
-    result = result >= 60 ? 59 : result;
-    setMinutesValue(result.toString());
+    setMinutesValue(normalizeMinutes(minutes));
   };
 
   const handleHoursChange = (hours: string): void => {
-    const converted = parseInt(hours);
-
-    const result = converted < 0 ? 0 : converted;
-    setHoursValue(result.toString());
+    setHoursValue(normalizeHours(hours));
   };
 
   const sendRequest = async () => {
-    const minutes = parseInt(minutesValue);
-    const hours = parseInt(hoursValue);
-
-    const totalMinutes = (isNaN(hours)
-      ? 0
-      : hours * 60) + (isNaN(minutes) ? 0 : minutes);
+    const totalMinutes = toTotalMinutes(hoursValue, minutesValue);
 
     let response: TimeConverterDto | null = null
     if (isEts) {

@@ -12,15 +12,26 @@ on:
 jobs:
   build_and_deploy_job:
     env:
-      NODE_VERSION: 18
+      NODE_VERSION: 22
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
           lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ts-converter/package-lock.json
+      - name: Install, lint and test
+        working-directory: ts-converter
+        run: |
+          npm ci
+          npm run lint
+          npm test
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
