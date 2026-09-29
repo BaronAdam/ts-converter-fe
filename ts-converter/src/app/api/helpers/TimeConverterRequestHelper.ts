@@ -20,10 +20,10 @@ export const handleTimeConverterRequest = async (
     return result;
   } catch (error) {
     if (error instanceof Error) {
-      console.log("error message: ", error.message);
+      console.error("error message: ", error.message);
       return null;
     } else {
-      console.log("unexpected error: ", error);
+      console.error("unexpected error: ", error);
       return null;
     }
   }
