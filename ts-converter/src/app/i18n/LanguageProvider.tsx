@@ -48,7 +48,7 @@ const FADE_IN_DELAY_MS = 50;
  * unless another language swap has started in the meantime. A timer (not
  * requestAnimationFrame) so a background tab can't leave the UI hidden.
  */
-const endFade = (isSwapPending: () => boolean) =>
+const endFade = (isSwapPending: () => boolean): number =>
   window.setTimeout(() => {
     if (!isSwapPending()) {
       document.documentElement.removeAttribute(FADING_ATTRIBUTE);
@@ -70,6 +70,7 @@ export const LanguageProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE);
 
   const fadeTimer = useRef<number>(undefined);
+  const fadeInTimer = useRef<number>(undefined);
   const swapPending = useRef(false);
 
   useEffect(() => {
@@ -79,10 +80,11 @@ export const LanguageProvider: FC<{ children: ReactNode }> = ({ children }) => {
       setLanguageState(stored);
     }
     // the pre-paint script hides content for a saved non-default language
-    endFade(() => swapPending.current);
+    fadeInTimer.current = endFade(() => swapPending.current);
 
     return () => {
       window.clearTimeout(fadeTimer.current);
+      window.clearTimeout(fadeInTimer.current);
       document.documentElement.removeAttribute(FADING_ATTRIBUTE);
     };
   }, []);
@@ -103,6 +105,7 @@ export const LanguageProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const setLanguage = useCallback(
     (next: Language) => {
       window.clearTimeout(fadeTimer.current);
+      window.clearTimeout(fadeInTimer.current);
 
       if (prefersReducedMotion()) {
         swapPending.current = false;
@@ -116,7 +119,7 @@ export const LanguageProvider: FC<{ children: ReactNode }> = ({ children }) => {
       fadeTimer.current = window.setTimeout(() => {
         swapPending.current = false;
         applyLanguage(next);
-        endFade(() => swapPending.current);
+        fadeInTimer.current = endFade(() => swapPending.current);
       }, LANG_FADE_MS);
     },
     [applyLanguage],
