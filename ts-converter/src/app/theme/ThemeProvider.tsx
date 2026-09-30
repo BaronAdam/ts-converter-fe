@@ -8,10 +8,10 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
-import { THEME_FADE_MS, THEME_STORAGE_KEY } from "../initScript";
+import { flushSync } from "react-dom";
+import { THEME_REVEAL_MS, THEME_STORAGE_KEY } from "../initScript";
 
 export type Theme = "light" | "dark";
 
@@ -19,7 +19,7 @@ export { THEME_STORAGE_KEY };
 
 type ThemeContextValue = {
   theme: Theme;
-  toggleTheme: () => void;
+  toggleTheme: (origin?: RevealOrigin) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -28,6 +28,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 /** Animate only where we can tell the user hasn't asked for reduced motion. */
+/** Animate only where we can tell the user hasn't asked for reduced motion. */
 const prefersReducedMotion = (): boolean =>
   typeof window.matchMedia !== "function" ||
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -35,9 +36,32 @@ const prefersReducedMotion = (): boolean =>
 const readAppliedTheme = (): Theme =>
   document.documentElement.classList.contains("dark") ? "dark" : "light";
 
+export type RevealOrigin = { x: number; y: number };
+
+/** Expands the new theme as a circle from the origin (see ::view-transition rules in globals.css). */
+const revealFrom = ({ x, y }: RevealOrigin) => {
+  const radius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y),
+  );
+
+  document.documentElement.animate(
+    {
+      clipPath: [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${radius}px at ${x}px ${y}px)`,
+      ],
+    },
+    {
+      duration: THEME_REVEAL_MS,
+      easing: "ease-in-out",
+      pseudoElement: "::view-transition-new(root)",
+    },
+  );
+};
+
 export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>("light");
-  const transitionTimer = useRef<number>(undefined);
 
   useEffect(() => {
     // the init script already applied the saved/system theme to <html>
@@ -45,22 +69,26 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setTheme(readAppliedTheme());
   }, []);
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = useCallback((origin?: RevealOrigin) => {
     const root = document.documentElement;
     const next: Theme = readAppliedTheme() === "dark" ? "light" : "dark";
 
-    if (!prefersReducedMotion()) {
-      // enables a short colour crossfade on every surface (see globals.css)
-      root.classList.add("theme-transition");
-      window.clearTimeout(transitionTimer.current);
-      transitionTimer.current = window.setTimeout(
-        () => root.classList.remove("theme-transition"),
-        THEME_FADE_MS + 50,
-      );
+    const apply = () => {
+      root.classList.toggle("dark", next === "dark");
+      setTheme(next);
+    };
+
+    if (!prefersReducedMotion() && typeof document.startViewTransition === "function") {
+      // Snapshot old and new pages and reveal the new one, so text never
+      // cross-fades against its background (which makes it vanish mid-way).
+      const transition = document.startViewTransition(() => flushSync(apply));
+      if (origin) {
+        transition.ready.then(() => revealFrom(origin)).catch(() => {});
+      }
+    } else {
+      apply();
     }
 
-    root.classList.toggle("dark", next === "dark");
-    setTheme(next);
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, next);
     } catch {

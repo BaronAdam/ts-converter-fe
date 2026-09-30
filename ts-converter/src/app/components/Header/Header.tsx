@@ -32,11 +32,11 @@ const Header: FC = () => {
             <circle cx="17" cy="17.5" r="1.8" />
           </svg>
         </div>
-        <div className="lang-fade flex flex-col leading-none">
-          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted sm:text-xs">
+        <div className="flex flex-col leading-none">
+          <span className="lang-fade text-[10px] font-bold uppercase tracking-[0.14em] text-muted sm:text-xs">
             {t.brand}
           </span>
-          <h1 className="font-display text-2xl font-bold sm:text-[30px]">
+          <h1 className="lang-fade font-display text-2xl font-bold sm:text-[30px]">
             {t.title}
           </h1>
         </div>
@@ -68,16 +68,22 @@ const Header: FC = () => {
         <button
           type="button"
           aria-label={t.themeLabel}
-          onClick={toggleTheme}
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            toggleTheme({
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+            });
+          }}
           className="flex h-11 w-11 items-center justify-center rounded-xl border-[1.5px] border-line bg-surface text-ink sm:h-12 sm:w-12 sm:rounded-2xl"
         >
           {theme === "dark" ? (
-            <svg key="sun" {...iconProps} className="theme-icon">
+            <svg key="sun" {...iconProps}>
               <circle cx="12" cy="12" r="4" />
               <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
             </svg>
           ) : (
-            <svg key="moon" {...iconProps} className="theme-icon">
+            <svg key="moon" {...iconProps}>
               <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />
             </svg>
           )}

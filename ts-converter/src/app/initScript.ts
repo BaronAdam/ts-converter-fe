@@ -3,9 +3,10 @@
 export const THEME_STORAGE_KEY = "ts-converter-theme";
 export const LANGUAGE_STORAGE_KEY = "ts-converter-lang";
 
-/** Milliseconds for each half of the language fade, and the theme crossfade. */
+/** Milliseconds for each half of the language fade. */
 export const LANG_FADE_MS = 160;
-export const THEME_FADE_MS = 300;
+/** Milliseconds for the circular theme reveal. */
+export const THEME_REVEAL_MS = 500;
 
 /**
  * Runs before first paint (see layout.tsx):

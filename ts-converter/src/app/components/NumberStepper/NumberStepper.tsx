@@ -27,7 +27,7 @@ const NumberStepper: FC<NumberStepperProps> = ({
   incLabel,
 }) => (
   <div className="flex flex-col gap-1.5">
-    <label htmlFor={id} className="text-[13px] font-semibold text-muted sm:text-sm">
+    <label htmlFor={id} className="lang-fade text-[13px] font-semibold text-muted sm:text-sm">
       {label}
     </label>
     <div className="flex h-[60px] items-center overflow-hidden rounded-xl border-[1.5px] border-line bg-canvas sm:h-[72px] sm:rounded-2xl">

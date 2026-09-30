@@ -56,27 +56,15 @@ button {
     opacity: 0;
   }
 
-  /* added to <html> for a moment while the theme changes */
-  html.theme-transition,
-  html.theme-transition *,
-  html.theme-transition *::before,
-  html.theme-transition *::after {
-    transition:
-      background-color 300ms ease,
-      color 300ms ease,
-      border-color 300ms ease,
-      fill 300ms ease,
-      stroke 300ms ease !important;
+  /* Theme swap: the browser snapshots old/new pages and we reveal the new one
+     as a circle (see ThemeProvider), so text never blends with its background. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
   }
 
-  .theme-icon {
-    animation: theme-icon-in 300ms ease;
-  }
-
-  @keyframes theme-icon-in {
-    from {
-      opacity: 0;
-      transform: rotate(-60deg) scale(0.6);
-    }
+  ::view-transition-new(root) {
+    z-index: 1;
   }
 }

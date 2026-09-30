@@ -23,7 +23,7 @@ const SegmentedControl = <T extends string>({
   emphasis = false,
 }: SegmentedControlProps<T>) => (
   <div className="flex flex-col gap-2.5">
-    <div className="text-xs font-bold uppercase tracking-widest text-muted sm:text-[13px]">
+    <div className="lang-fade text-xs font-bold uppercase tracking-widest text-muted sm:text-[13px]">
       {label}
     </div>
     <div role="group" aria-label={label} className="flex gap-2 sm:gap-3">
@@ -44,15 +44,15 @@ const SegmentedControl = <T extends string>({
             <span
               className={
                 emphasis
-                  ? "font-display text-[26px] font-bold leading-none sm:text-[30px]"
-                  : "text-base font-bold sm:text-lg"
+                  ? "lang-fade font-display text-[26px] font-bold leading-none sm:text-[30px]"
+                  : "lang-fade text-base font-bold sm:text-lg"
               }
             >
               {option.label}
             </span>
             {option.hint ? (
               <span
-                className={`text-[13px] sm:text-sm ${selected ? "text-on-accent" : "text-muted"}`}
+                className={`lang-fade text-[13px] sm:text-sm ${selected ? "text-on-accent" : "text-muted"}`}
               >
                 {option.hint}
               </span>

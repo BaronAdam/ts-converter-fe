@@ -43,7 +43,7 @@ const ResultPanel: FC<ResultPanelProps> = ({
       aria-live="polite"
       className="order-first flex flex-col gap-2 rounded-[20px] bg-res-bg px-[22px] py-5 text-res-fg sm:gap-3 sm:rounded-3xl sm:px-9 sm:py-8 lg:order-none"
     >
-      <div className="text-xs font-bold uppercase tracking-[0.12em] opacity-80 sm:text-[13px]">
+      <div className="lang-fade text-xs font-bold uppercase tracking-[0.12em] opacity-80 sm:text-[13px]">
         {t.resultLabel}
       </div>
 
@@ -58,16 +58,22 @@ const ResultPanel: FC<ResultPanelProps> = ({
         </div>
 
         {state.status === "idle" && (
-          <p className="max-w-xs text-base opacity-85 sm:text-lg">{t.empty}</p>
+          <p className="max-w-xs text-base opacity-85 sm:text-lg">
+            <span className="lang-fade">{t.empty}</span>
+          </p>
         )}
 
-        {loading && <p className="text-base opacity-85">{t.calculating}</p>}
+        {loading && <p className="text-base opacity-85">
+            <span className="lang-fade">{t.calculating}</span>
+          </p>}
 
         {state.status === "error" && (
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-base font-semibold">{t.error}</p>
+            <p className="text-base font-semibold">
+              <span className="lang-fade">{t.error}</span>
+            </p>
             <button type="button" onClick={onRetry} className={outlineButton}>
-              {t.retry}
+              <span className="lang-fade">{t.retry}</span>
             </button>
           </div>
         )}
@@ -75,10 +81,12 @@ const ResultPanel: FC<ResultPanelProps> = ({
         {state.status === "success" && (
           <div className="flex flex-col gap-0.5">
             <p className="text-[17px] font-semibold sm:text-[22px]">
-              {t.real(state.data.Hours, state.data.Minutes)}
+              <span className="lang-fade">
+                {t.real(state.data.Hours, state.data.Minutes)}
+              </span>
             </p>
             <p className="text-sm opacity-80 sm:text-base">
-              {t.from(inputHours, inputMinutes)}
+              <span className="lang-fade">{t.from(inputHours, inputMinutes)}</span>
             </p>
           </div>
         )}
@@ -86,11 +94,11 @@ const ResultPanel: FC<ResultPanelProps> = ({
 
       <div className="flex flex-col gap-4">
         <p className="border-t border-current/40 pt-2.5 text-[13px] opacity-90 sm:rounded-2xl sm:border sm:px-4 sm:py-3.5 sm:text-[15px]">
-          {t.rate(rate)}
+          <span className="lang-fade">{t.rate(rate)}</span>
         </p>
         {hasInput && (
           <button type="button" onClick={onReset} className={outlineButton}>
-            {t.reset}
+            <span className="lang-fade">{t.reset}</span>
           </button>
         )}
       </div>

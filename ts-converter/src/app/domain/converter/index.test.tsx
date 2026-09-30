@@ -43,8 +43,22 @@ afterEach(() => {
   // @ts-expect-error restore jsdom's default (no matchMedia)
   delete window.matchMedia;
   document.documentElement.removeAttribute("data-lang-fading");
-  document.documentElement.classList.remove("theme-transition");
+  // @ts-expect-error remove the view transition stub
+  delete document.startViewTransition;
+  // @ts-expect-error remove the animate stub
+  delete Element.prototype.animate;
 });
+
+const stubViewTransition = () => {
+  const start = vi.fn((update: () => void) => {
+    update();
+    return { ready: Promise.resolve() };
+  });
+  const animate = vi.fn();
+  Object.assign(document, { startViewTransition: start });
+  Object.assign(Element.prototype, { animate });
+  return { start, animate };
+};
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -330,24 +344,41 @@ describe("TsConverter", () => {
       expect(screen.getByLabelText("Hours")).toBeInTheDocument();
     });
 
-    it("crossfades the theme, then removes the transition class", async () => {
+    it("reveals the new theme as a circle from the toggle via a view transition", async () => {
+      setReducedMotion(false);
+      const { start, animate } = stubViewTransition();
+      await renderApp();
+      pressNow("Switch light/dark theme");
+
+      expect(start).toHaveBeenCalledTimes(1);
+      expect(root).toHaveClass("dark");
+      expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+      await waitFor(() => expect(animate).toHaveBeenCalledTimes(1));
+      expect(animate).toHaveBeenCalledWith(
+        { clipPath: [expect.stringMatching(/^circle\(0px at/), expect.stringMatching(/^circle\(.+px at/)] },
+        expect.objectContaining({ pseudoElement: "::view-transition-new(root)" }),
+      );
+
+      pressNow("Switch light/dark theme");
+      expect(root).not.toHaveClass("dark");
+    });
+
+    it("switches instantly when view transitions are unsupported", async () => {
       setReducedMotion(false);
       await renderApp();
       pressNow("Switch light/dark theme");
 
       expect(root).toHaveClass("dark");
-      expect(root).toHaveClass("theme-transition");
-      await waitFor(() => expect(root).not.toHaveClass("theme-transition"));
-      expect(root).toHaveClass("dark");
     });
 
-    it("switches the theme without a transition with reduced motion", async () => {
+    it("does not start a view transition with reduced motion", async () => {
       setReducedMotion(true);
+      const { start } = stubViewTransition();
       await renderApp();
-      await press("Switch light/dark theme");
+      pressNow("Switch light/dark theme");
 
+      expect(start).not.toHaveBeenCalled();
       expect(root).toHaveClass("dark");
-      expect(root).not.toHaveClass("theme-transition");
     });
   });
 });

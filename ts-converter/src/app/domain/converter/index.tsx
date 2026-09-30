@@ -20,7 +20,7 @@ import { useConversion } from "./useConversion";
 export const QUICK_PICKS = [30, 60, 120, 360, 720, 1440];
 
 const sectionLabel =
-  "text-xs font-bold uppercase tracking-widest text-muted sm:text-[13px]";
+  "lang-fade text-xs font-bold uppercase tracking-widest text-muted sm:text-[13px]";
 
 const TsConverter: FC = () => {
   const { t } = useLanguage();
@@ -53,7 +53,7 @@ const TsConverter: FC = () => {
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-6 sm:px-8 sm:pb-12 lg:px-12">
       <Header />
 
-      <main className="lang-fade grid flex-1 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_440px]">
+      <main className="grid flex-1 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_440px]">
         <section className="flex flex-col gap-5 rounded-[20px] border border-line bg-surface p-5 sm:gap-6 sm:rounded-3xl sm:p-8">
           <SegmentedControl<Game>
             label={t.gameLabel}
@@ -114,7 +114,7 @@ const TsConverter: FC = () => {
             </div>
 
             <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="mr-1 hidden text-sm text-muted sm:inline">
+              <span className="lang-fade mr-1 hidden text-sm text-muted sm:inline">
                 {t.quick}
               </span>
               {QUICK_PICKS.map((mins) => (
@@ -127,7 +127,7 @@ const TsConverter: FC = () => {
                   }}
                   className="h-11 rounded-full border-[1.5px] border-line bg-transparent px-3.5 text-sm font-semibold text-ink sm:h-10 sm:px-4 sm:text-[15px]"
                 >
-                  {quickLabel(mins)}
+                  <span className="lang-fade">{quickLabel(mins)}</span>
                 </button>
               ))}
             </div>

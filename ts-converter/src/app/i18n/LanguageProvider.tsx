@@ -40,18 +40,20 @@ const prefersReducedMotion = (): boolean =>
   typeof window.matchMedia !== "function" ||
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** Gives React time to commit the new text before it fades back in. */
+const FADE_IN_DELAY_MS = 50;
+
 /**
  * Fades translatable content back in once the new text has rendered,
- * unless another language swap has started in the meantime.
+ * unless another language swap has started in the meantime. A timer (not
+ * requestAnimationFrame) so a background tab can't leave the UI hidden.
  */
 const endFade = (isSwapPending: () => boolean) =>
-  window.requestAnimationFrame(() =>
-    window.requestAnimationFrame(() => {
-      if (!isSwapPending()) {
-        document.documentElement.removeAttribute(FADING_ATTRIBUTE);
-      }
-    }),
-  );
+  window.setTimeout(() => {
+    if (!isSwapPending()) {
+      document.documentElement.removeAttribute(FADING_ATTRIBUTE);
+    }
+  }, FADE_IN_DELAY_MS);
 
 const readStoredLanguage = (): Language | null => {
   try {
