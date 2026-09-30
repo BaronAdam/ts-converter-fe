@@ -47,12 +47,12 @@ describe("detectLanguage", () => {
     [["pl"], "pl"],
     [["pl-PL"], "pl"],
     [["PL-pl"], "pl"],
+    [["pl-PL", "en"], "pl"],
     [["en"], "en"],
     [["en-US"], "en"],
     [["en-GB", "pl"], "en"],
-    [["de-DE", "pl-PL", "en"], "pl"],
-    [["de", "fr", "en-US"], "en"],
     [["de-DE"], "en"],
+    [["de-DE", "pl-PL", "en"], "en"], // only the primary language counts
     [["ja"], "en"],
     [[], "en"],
     [[""], "en"],
@@ -62,6 +62,6 @@ describe("detectLanguage", () => {
 
   it("does not mistake other languages that merely start with the same letters", () => {
     expect(detectLanguage(["pt-BR"])).toBe("en"); // Portuguese, not Polish
-    expect(detectLanguage(["ens"])).toBe("en");
+    expect(detectLanguage(["pls"])).toBe("en");
   });
 });

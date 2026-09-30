@@ -62,14 +62,19 @@ describe("initScript", () => {
     expect(root).toHaveAttribute("data-lang-fading");
   });
 
-  it("falls back to English for an unsupported system language", () => {
+  it("uses English for every system language other than Polish", () => {
     setSystemLanguages(["de-DE"]);
     run();
     expect(root).toHaveAttribute("data-lang-fading");
   });
 
-  it("uses the first supported language the visitor prefers", () => {
+  it("only looks at the primary system language", () => {
     setSystemLanguages(["de-DE", "pl", "en"]);
+    run();
+    expect(root).toHaveAttribute("data-lang-fading"); // German first -> English
+
+    root.removeAttribute("data-lang-fading");
+    setSystemLanguages(["pl-PL", "en"]);
     run();
     expect(root).not.toHaveAttribute("data-lang-fading");
   });

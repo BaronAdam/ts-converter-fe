@@ -281,15 +281,21 @@ describe("TsConverter", () => {
       expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBeNull();
     });
 
-    it("falls back to English for an unsupported system language", async () => {
+    it("uses English for any system language other than Polish", async () => {
       setSystemLanguages(["de-DE", "fr"]);
       await renderApp(null);
 
       expect(await screen.findByLabelText("Hours")).toBeInTheDocument();
     });
 
-    it("uses the first supported language in the system list", async () => {
-      setSystemLanguages(["de-DE", "pl-PL", "en-US"]);
+    it("only looks at the primary system language", async () => {
+      setSystemLanguages(["de-DE", "pl-PL"]);
+      await renderApp(null);
+      expect(await screen.findByLabelText("Hours")).toBeInTheDocument();
+    });
+
+    it("uses Polish for a Polish primary language even with English second", async () => {
+      setSystemLanguages(["pl-PL", "en-US"]);
       await renderApp(null);
 
       expect(screen.getByLabelText("Godziny")).toBeInTheDocument();
