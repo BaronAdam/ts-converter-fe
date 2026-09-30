@@ -1,10 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import TsConverter from ".";
 import { LanguageProvider } from "@/app/i18n/LanguageProvider";
 import { LANGUAGE_STORAGE_KEY } from "@/app/i18n/translations";
-import { ThemeProvider, THEME_STORAGE_KEY } from "@/app/theme/ThemeProvider";
+import { THEME_STORAGE_KEY } from "@/app/initScript";
+import { ThemeProvider } from "@/app/theme/ThemeProvider";
 
 const convertTime = vi.hoisted(() => vi.fn());
 vi.mock("@/app/api/convert", () => ({ convertTime }));
@@ -26,6 +27,24 @@ const hours = () => screen.getByLabelText("Hours");
 const minutes = () => screen.getByLabelText("Minutes");
 const press = (name: string | RegExp) =>
   userEvent.click(screen.getByRole("button", { name }));
+// synchronous click, for assertions that depend on animation timing
+const pressNow = (name: string | RegExp) =>
+  fireEvent.click(screen.getByRole("button", { name }));
+
+const setReducedMotion = (reduce: boolean) => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
+    value: () => ({ matches: reduce }),
+  });
+};
+
+afterEach(() => {
+  // @ts-expect-error restore jsdom's default (no matchMedia)
+  delete window.matchMedia;
+  document.documentElement.removeAttribute("data-lang-fading");
+  document.documentElement.classList.remove("theme-transition");
+});
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -262,6 +281,73 @@ describe("TsConverter", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "Switch light/dark theme" }));
       expect(document.documentElement).not.toHaveClass("dark");
+    });
+  });
+
+  describe("animations", () => {
+    const root = document.documentElement;
+
+    it("fades the language out, swaps the text while hidden, then fades back in", async () => {
+      setReducedMotion(false);
+      await renderApp(null);
+      pressNow("EN");
+
+      // still Polish while fading out
+      expect(root).toHaveAttribute("data-lang-fading");
+      expect(screen.getByLabelText("Godziny")).toBeInTheDocument();
+
+      expect(await screen.findByLabelText("Hours")).toBeInTheDocument();
+      await waitFor(() => expect(root).not.toHaveAttribute("data-lang-fading"));
+      expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("en");
+    });
+
+    it("lets the last language choice win when toggled quickly", async () => {
+      setReducedMotion(false);
+      await renderApp(null);
+      pressNow("EN");
+      pressNow("PL");
+
+      await waitFor(() => expect(root).not.toHaveAttribute("data-lang-fading"));
+      expect(screen.getByLabelText("Godziny")).toBeInTheDocument();
+      expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("pl");
+    });
+
+    it("fades content in after applying a saved language on load", async () => {
+      setReducedMotion(false);
+      root.setAttribute("data-lang-fading", ""); // what the pre-paint script does
+      await renderApp("en");
+
+      await waitFor(() => expect(root).not.toHaveAttribute("data-lang-fading"));
+      expect(screen.getByLabelText("Hours")).toBeInTheDocument();
+    });
+
+    it("swaps the language instantly with reduced motion", async () => {
+      setReducedMotion(true);
+      await renderApp(null);
+      await press("EN");
+
+      expect(root).not.toHaveAttribute("data-lang-fading");
+      expect(screen.getByLabelText("Hours")).toBeInTheDocument();
+    });
+
+    it("crossfades the theme, then removes the transition class", async () => {
+      setReducedMotion(false);
+      await renderApp();
+      pressNow("Switch light/dark theme");
+
+      expect(root).toHaveClass("dark");
+      expect(root).toHaveClass("theme-transition");
+      await waitFor(() => expect(root).not.toHaveClass("theme-transition"));
+      expect(root).toHaveClass("dark");
+    });
+
+    it("switches the theme without a transition with reduced motion", async () => {
+      setReducedMotion(true);
+      await renderApp();
+      await press("Switch light/dark theme");
+
+      expect(root).toHaveClass("dark");
+      expect(root).not.toHaveClass("theme-transition");
     });
   });
 });

@@ -2,7 +2,7 @@ export type Language = "pl" | "en";
 
 export const LANGUAGES: readonly Language[] = ["pl", "en"];
 export const DEFAULT_LANGUAGE: Language = "pl";
-export const LANGUAGE_STORAGE_KEY = "ts-converter-lang";
+export { LANGUAGE_STORAGE_KEY } from "../initScript";
 
 export type Translations = {
   brand: string;

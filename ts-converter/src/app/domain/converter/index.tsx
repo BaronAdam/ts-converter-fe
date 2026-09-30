@@ -53,7 +53,7 @@ const TsConverter: FC = () => {
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-6 sm:px-8 sm:pb-12 lg:px-12">
       <Header />
 
-      <main className="grid flex-1 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_440px]">
+      <main className="lang-fade grid flex-1 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_440px]">
         <section className="flex flex-col gap-5 rounded-[20px] border border-line bg-surface p-5 sm:gap-6 sm:rounded-3xl sm:p-8">
           <SegmentedControl<Game>
             label={t.gameLabel}

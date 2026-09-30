@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "./i18n/LanguageProvider";
-import { ThemeProvider, themeInitScript } from "./theme/ThemeProvider";
+import { initScript } from "./initScript";
+import { ThemeProvider } from "./theme/ThemeProvider";
 
 const displayFont = Barlow_Condensed({
   subsets: ["latin", "latin-ext"],
@@ -68,7 +69,7 @@ export default function RootLayout({
       className={`${displayFont.variable} ${bodyFont.variable}`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: initScript }} />
       </head>
       <body className="font-sans">
         <ThemeProvider>

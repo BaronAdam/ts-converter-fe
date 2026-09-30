@@ -8,15 +8,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { THEME_FADE_MS, THEME_STORAGE_KEY } from "../initScript";
 
 export type Theme = "light" | "dark";
 
-export const THEME_STORAGE_KEY = "ts-converter-theme";
-
-/** Runs before first paint (see layout.tsx) so there is no light/dark flash. */
-export const themeInitScript = `(function(){try{var t=localStorage.getItem("${THEME_STORAGE_KEY}");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
+export { THEME_STORAGE_KEY };
 
 type ThemeContextValue = {
   theme: Theme;
@@ -28,11 +27,17 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggleTheme: () => {},
 });
 
+/** Animate only where we can tell the user hasn't asked for reduced motion. */
+const prefersReducedMotion = (): boolean =>
+  typeof window.matchMedia !== "function" ||
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 const readAppliedTheme = (): Theme =>
   document.documentElement.classList.contains("dark") ? "dark" : "light";
 
 export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>("light");
+  const transitionTimer = useRef<number>(undefined);
 
   useEffect(() => {
     // the init script already applied the saved/system theme to <html>
@@ -41,8 +46,20 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, []);
 
   const toggleTheme = useCallback(() => {
+    const root = document.documentElement;
     const next: Theme = readAppliedTheme() === "dark" ? "light" : "dark";
-    document.documentElement.classList.toggle("dark", next === "dark");
+
+    if (!prefersReducedMotion()) {
+      // enables a short colour crossfade on every surface (see globals.css)
+      root.classList.add("theme-transition");
+      window.clearTimeout(transitionTimer.current);
+      transitionTimer.current = window.setTimeout(
+        () => root.classList.remove("theme-transition"),
+        THEME_FADE_MS + 50,
+      );
+    }
+
+    root.classList.toggle("dark", next === "dark");
     setTheme(next);
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, next);
