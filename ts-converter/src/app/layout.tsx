@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Barlow_Condensed, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "./i18n/LanguageProvider";
+import { ThemeProvider, themeInitScript } from "./theme/ThemeProvider";
 
-const inter = Inter({ subsets: ["latin"] });
+const displayFont = Barlow_Condensed({
+  subsets: ["latin", "latin-ext"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+});
+
+const bodyFont = DM_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-body",
+});
 
 const APP_NAME: string = "Truck Sim Time Converter";
 const APP_DEFAULT_TITLE: string = "Truck Sim Time Converter";
@@ -51,8 +62,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html
+      lang="pl"
+      suppressHydrationWarning
+      className={`${displayFont.variable} ${bodyFont.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="font-sans">
+        <ThemeProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

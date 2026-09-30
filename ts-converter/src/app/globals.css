@@ -2,3 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --canvas: #f4f1ea;
+  --surface: #ffffff;
+  --ink: #1b1a17;
+  --muted: #66625a;
+  --line: #ddd7c8;
+  --accent: #ffb020;
+  --on-accent: #1b1a17;
+  --track: #e7e2d4;
+  --focus: #1b1a17;
+  --res-bg: #1b1a17;
+  --res-fg: #f4f1ea;
+  --res-num: #ffb020;
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: #12110f;
+  --surface: #1c1a17;
+  --ink: #f2eee4;
+  --muted: #a9a397;
+  --line: #37342d;
+  --track: #2a2723;
+  --focus: #ffb020;
+  --res-bg: #ffb020;
+  --res-fg: #1b1a17;
+  --res-num: #1b1a17;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}

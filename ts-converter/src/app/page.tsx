@@ -1,7 +1,5 @@
-import TsConverter from "./domain/ats-converter";
+import TsConverter from "./domain/converter";
 
 export default function Home() {
-  return (
-    <TsConverter></TsConverter>
-  );
+  return <TsConverter />;
 }
