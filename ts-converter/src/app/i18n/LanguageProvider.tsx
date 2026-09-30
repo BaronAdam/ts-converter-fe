@@ -13,6 +13,7 @@ import {
 } from "react";
 import {
   DEFAULT_LANGUAGE,
+  detectLanguage,
   isLanguage,
   Language,
   LANGUAGE_STORAGE_KEY,
@@ -55,6 +56,11 @@ const endFade = (isSwapPending: () => boolean): number =>
     }
   }, FADE_IN_DELAY_MS);
 
+const readSystemLanguage = (): Language =>
+  detectLanguage(
+    navigator.languages?.length ? navigator.languages : [navigator.language],
+  );
+
 const readStoredLanguage = (): Language | null => {
   try {
     const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -74,10 +80,12 @@ export const LanguageProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const swapPending = useRef(false);
 
   useEffect(() => {
-    const stored = readStoredLanguage();
-    if (stored) {
+    // an explicit choice wins; otherwise follow the system (never saved, so it
+    // keeps following the system until the visitor picks a language)
+    const initial = readStoredLanguage() ?? readSystemLanguage();
+    if (initial !== DEFAULT_LANGUAGE) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLanguageState(stored);
+      setLanguageState(initial);
     }
     // the pre-paint script hides content for a saved non-default language
     fadeInTimer.current = endFade(() => swapPending.current);

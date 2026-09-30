@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setSystemLanguages } from "../test-utils/systemLanguage";
 import {
   initScript,
   LANGUAGE_STORAGE_KEY,
@@ -51,17 +52,45 @@ describe("initScript", () => {
     expect(root).not.toHaveClass("dark");
   });
 
-  it("hides content for a saved non-default language only", () => {
+  it("hides content unless the visitor's language is Polish", () => {
+    setSystemLanguages(["pl-PL"]);
     run();
     expect(root).not.toHaveAttribute("data-lang-fading");
 
+    setSystemLanguages(["en-US"]);
+    run();
+    expect(root).toHaveAttribute("data-lang-fading");
+  });
+
+  it("falls back to English for an unsupported system language", () => {
+    setSystemLanguages(["de-DE"]);
+    run();
+    expect(root).toHaveAttribute("data-lang-fading");
+  });
+
+  it("uses the first supported language the visitor prefers", () => {
+    setSystemLanguages(["de-DE", "pl", "en"]);
+    run();
+    expect(root).not.toHaveAttribute("data-lang-fading");
+  });
+
+  it("lets a saved choice win over the system language", () => {
+    setSystemLanguages(["en-US"]);
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "pl");
     run();
     expect(root).not.toHaveAttribute("data-lang-fading");
 
+    setSystemLanguages(["pl-PL"]);
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "en");
     run();
     expect(root).toHaveAttribute("data-lang-fading");
+  });
+
+  it("ignores an invalid saved value and uses the system language", () => {
+    setSystemLanguages(["pl-PL"]);
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "de");
+    run();
+    expect(root).not.toHaveAttribute("data-lang-fading");
   });
 
   it("never throws when storage is unavailable", () => {

@@ -1,7 +1,10 @@
 export type Language = "pl" | "en";
 
 export const LANGUAGES: readonly Language[] = ["pl", "en"];
+/** Language of the server render and first paint (the site is Polish-first). */
 export const DEFAULT_LANGUAGE: Language = "pl";
+/** Used when none of the visitor's languages is supported. */
+export const FALLBACK_LANGUAGE: Language = "en";
 export { LANGUAGE_STORAGE_KEY } from "../initScript";
 
 export type Translations = {
@@ -115,3 +118,15 @@ export const translations: Record<Language, Translations> = {
 
 export const isLanguage = (value: unknown): value is Language =>
   typeof value === "string" && (LANGUAGES as readonly string[]).includes(value);
+
+/**
+ * Picks the first supported language from the visitor's preferred languages
+ * (e.g. `navigator.languages`); regional variants like "pl-PL" or "en-GB" count.
+ */
+export const detectLanguage = (preferred: readonly string[]): Language => {
+  for (const tag of preferred) {
+    const primary = tag.toLowerCase().split("-")[0];
+    if (isLanguage(primary)) return primary;
+  }
+  return FALLBACK_LANGUAGE;
+};

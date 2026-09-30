@@ -4,6 +4,10 @@ process.env.TZ = "UTC";
 
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, beforeEach } from "vitest";
+import { setSystemLanguages } from "./src/test-utils/systemLanguage";
+
+// tests assume a Polish system unless they say otherwise
+beforeEach(() => setSystemLanguages(["pl-PL"]));
 
 afterEach(() => cleanup());

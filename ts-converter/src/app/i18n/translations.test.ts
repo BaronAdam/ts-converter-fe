@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLanguage, LANGUAGES, translations } from "./translations";
+import { detectLanguage, isLanguage, LANGUAGES, translations } from "./translations";
 
 describe("translations", () => {
   it("has the same keys in every language", () => {
@@ -39,5 +39,29 @@ describe("translations", () => {
     [null, false],
   ])("isLanguage(%j) -> %s", (value, expected) => {
     expect(isLanguage(value)).toBe(expected);
+  });
+});
+
+describe("detectLanguage", () => {
+  it.each([
+    [["pl"], "pl"],
+    [["pl-PL"], "pl"],
+    [["PL-pl"], "pl"],
+    [["en"], "en"],
+    [["en-US"], "en"],
+    [["en-GB", "pl"], "en"],
+    [["de-DE", "pl-PL", "en"], "pl"],
+    [["de", "fr", "en-US"], "en"],
+    [["de-DE"], "en"],
+    [["ja"], "en"],
+    [[], "en"],
+    [[""], "en"],
+  ])("%j -> %s", (preferred, expected) => {
+    expect(detectLanguage(preferred)).toBe(expected);
+  });
+
+  it("does not mistake other languages that merely start with the same letters", () => {
+    expect(detectLanguage(["pt-BR"])).toBe("en"); // Portuguese, not Polish
+    expect(detectLanguage(["ens"])).toBe("en");
   });
 });

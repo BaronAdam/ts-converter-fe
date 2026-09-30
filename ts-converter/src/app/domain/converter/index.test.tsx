@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/app/i18n/LanguageProvider";
 import { LANGUAGE_STORAGE_KEY } from "@/app/i18n/translations";
 import { THEME_STORAGE_KEY } from "@/app/initScript";
 import { ThemeProvider } from "@/app/theme/ThemeProvider";
+import { setSystemLanguages } from "@/test-utils/systemLanguage";
 
 const renderApp = async (lang: string | null = "en") => {
   if (lang) window.localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
@@ -268,6 +269,48 @@ describe("TsConverter", () => {
     it("restores the saved language and ignores an invalid one", async () => {
       await renderApp("en");
       expect(screen.getByRole("button", { name: "EN" })).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("follows an English system language when nothing is saved", async () => {
+      setSystemLanguages(["en-GB"]);
+      await renderApp(null);
+
+      expect(await screen.findByLabelText("Hours")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "EN" })).toHaveAttribute("aria-pressed", "true");
+      // following the system is not a choice, so nothing is saved
+      expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBeNull();
+    });
+
+    it("falls back to English for an unsupported system language", async () => {
+      setSystemLanguages(["de-DE", "fr"]);
+      await renderApp(null);
+
+      expect(await screen.findByLabelText("Hours")).toBeInTheDocument();
+    });
+
+    it("uses the first supported language in the system list", async () => {
+      setSystemLanguages(["de-DE", "pl-PL", "en-US"]);
+      await renderApp(null);
+
+      expect(screen.getByLabelText("Godziny")).toBeInTheDocument();
+    });
+
+    it("lets a saved language win over the system language", async () => {
+      setSystemLanguages(["en-US"]);
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, "pl");
+      await renderApp("pl");
+
+      expect(screen.getByLabelText("Godziny")).toBeInTheDocument();
+    });
+
+    it("keeps the chosen language once picked, even if the system differs", async () => {
+      setSystemLanguages(["en-US"]);
+      await renderApp(null);
+      await screen.findByLabelText("Hours");
+      await press("PL");
+
+      expect(screen.getByLabelText("Godziny")).toBeInTheDocument();
+      expect(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe("pl");
     });
 
     it("falls back to Polish for an invalid saved value", async () => {
