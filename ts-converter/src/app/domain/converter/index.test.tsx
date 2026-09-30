@@ -237,6 +237,69 @@ describe("TsConverter", () => {
     expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
   });
 
+  it("only offers Clear once there is a result", async () => {
+    await renderApp();
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+
+    await userEvent.type(minutes(), "10");
+    expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
+  });
+
+  it("swaps the empty hint and the result lines by collapsing, not unmounting", async () => {
+    await renderApp();
+    const hiddenAncestor = (text: string) =>
+      screen.getByText(text).closest("[aria-hidden]") as HTMLElement;
+
+    // empty: the hint is open, the arrival lines are collapsed
+    expect(hiddenAncestor("Enter the in-game time to see the result.")).toHaveAttribute("aria-hidden", "false");
+
+    await userEvent.type(minutes(), "30");
+    expect(hiddenAncestor("Enter the in-game time to see the result.")).toHaveAttribute("aria-hidden", "true");
+    expect(hiddenAncestor("You'll arrive at 12:01:30")).toHaveAttribute("aria-hidden", "false");
+  });
+
+  it("keeps the last result readable while it collapses after Clear", async () => {
+    await renderApp();
+    await userEvent.type(minutes(), "30");
+    expect(screen.getByText("You'll arrive at 12:01:30")).toBeInTheDocument();
+
+    await press("Clear");
+
+    // the text is still there (so it can be seen sliding away) but hidden and inert
+    const arrival = screen.getByText("You'll arrive at 12:01:30");
+    const box = arrival.closest("[aria-hidden]") as HTMLElement;
+    expect(box).toHaveAttribute("aria-hidden", "true");
+    expect(box).toHaveAttribute("inert");
+    expect(screen.getByText("From 0 h 30 min in game")).toBeInTheDocument();
+    expect(screen.getByText("Enter the in-game time to see the result.").closest("[aria-hidden]")).toHaveAttribute(
+      "aria-hidden",
+      "false",
+    );
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+  });
+
+  it("does not let the collapsed Clear button take focus", async () => {
+    await renderApp();
+    await userEvent.type(minutes(), "30");
+    await press("Clear");
+
+    const clear = screen.getByText("Clear").closest("button") as HTMLButtonElement;
+    expect(clear.closest("[inert]")).not.toBeNull();
+  });
+
+  it("shows the new result immediately after Clear and typing again", async () => {
+    await renderApp();
+    await userEvent.type(minutes(), "30");
+    await press("Clear");
+    await userEvent.type(minutes(), "60".slice(0, 1));
+
+    expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
+    expect(screen.getByText("Enter the in-game time to see the result.").closest("[aria-hidden]")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+  });
+
   it("clear button empties the inputs and the result", async () => {
     await renderApp();
     await userEvent.type(minutes(), "10");
