@@ -7,9 +7,6 @@ import { LANGUAGE_STORAGE_KEY } from "@/app/i18n/translations";
 import { THEME_STORAGE_KEY } from "@/app/initScript";
 import { ThemeProvider } from "@/app/theme/ThemeProvider";
 
-const convertTime = vi.hoisted(() => vi.fn());
-vi.mock("@/app/api/convert", () => ({ convertTime }));
-
 const renderApp = async (lang: string | null = "en") => {
   if (lang) window.localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
   render(
@@ -63,54 +60,56 @@ const stubViewTransition = () => {
 beforeEach(() => {
   window.localStorage.clear();
   document.documentElement.classList.remove("dark");
-  convertTime.mockReset();
-  convertTime.mockResolvedValue({ Hours: 1, Minutes: 5 });
 });
 
 describe("TsConverter", () => {
-  it("starts empty with no request", async () => {
+  it("starts empty", async () => {
     await renderApp();
 
     expect(screen.getByText("Enter the in-game time to see the result.")).toBeInTheDocument();
-    expect(convertTime).not.toHaveBeenCalled();
+    expect(screen.getByText("–:––:––")).toBeInTheDocument();
   });
 
-  it("converts total minutes for ATS outside a city by default and shows the result", async () => {
+  it("converts total minutes for ATS outside a city by default, with seconds", async () => {
     await renderApp();
     await userEvent.type(hours(), "1");
     await userEvent.type(minutes(), "30");
 
-    expect(await screen.findByText("1:05")).toBeInTheDocument();
-    expect(screen.getByText("1 h 5 min")).toBeInTheDocument();
+    // 90 game minutes / 20 = 4.5 real minutes
+    expect(screen.getByText("0:04:30")).toBeInTheDocument();
+    expect(screen.getByText("0 h 4 min 30 s")).toBeInTheDocument();
     expect(screen.getByText("From 1 h 30 min in game")).toBeInTheDocument();
-    expect(convertTime).toHaveBeenLastCalledWith({
-      game: "ats",
-      area: "outside",
-      region: "mainland",
-      minutes: 90,
-    });
     expect(screen.getByText("1 real minute = 20 game minutes")).toBeInTheDocument();
   });
 
-  it("sends one request for a burst of typing", async () => {
+  it("shows fractions of a minute as seconds", async () => {
     await renderApp();
-    await userEvent.type(minutes(), "45");
-    await screen.findByText("1:05");
+    await userEvent.type(hours(), "3");
+    await userEvent.type(minutes(), "20");
+    await press(/Inside a city/);
 
-    expect(convertTime).toHaveBeenCalledTimes(1);
-    expect(convertTime).toHaveBeenCalledWith(expect.objectContaining({ minutes: 45 }));
+    // 200 game minutes / 3 = 66.666... real minutes = 4000 s
+    expect(screen.getByText("1:06:40")).toBeInTheDocument();
+    expect(screen.getByText("1 real minute = 3 game minutes")).toBeInTheDocument();
   });
 
-  it("uses the city endpoint inside a city", async () => {
+  it("uses the mainland rate for ETS outside a city", async () => {
     await renderApp();
-    await press(/Inside a city/);
-    await userEvent.type(minutes(), "10");
-    await screen.findByText("1:05");
+    await press(/ETS/);
+    await userEvent.type(minutes(), "19");
 
-    expect(convertTime).toHaveBeenLastCalledWith(
-      expect.objectContaining({ area: "city", minutes: 10 }),
-    );
-    expect(screen.getByText("1 real minute = 3 game minutes")).toBeInTheDocument();
+    expect(screen.getByText("0:01:00")).toBeInTheDocument();
+    expect(screen.getByText("1 real minute = 19 game minutes")).toBeInTheDocument();
+  });
+
+  it("uses the UK rate for the UK region", async () => {
+    await renderApp();
+    await press(/ETS/);
+    await press(/United Kingdom/);
+    await userEvent.type(minutes(), "15");
+
+    expect(screen.getByText("0:01:00")).toBeInTheDocument();
+    expect(screen.getByText("1 real minute = 15 game minutes")).toBeInTheDocument();
   });
 
   it("only offers the region for ETS outside a city", async () => {
@@ -124,50 +123,46 @@ describe("TsConverter", () => {
     expect(screen.queryByText("United Kingdom")).not.toBeInTheDocument();
   });
 
-  it("converts for the UK region", async () => {
-    await renderApp();
-    await press(/ETS/);
-    await press(/United Kingdom/);
-    await userEvent.type(minutes(), "15");
-    await screen.findByText("1:05");
-
-    expect(convertTime).toHaveBeenLastCalledWith({
-      game: "ets",
-      area: "outside",
-      region: "uk",
-      minutes: 15,
-    });
-    expect(screen.getByText("1 real minute = 15 game minutes")).toBeInTheDocument();
-  });
-
   it("ignores a stale UK choice after switching back to ATS", async () => {
     await renderApp();
     await press(/ETS/);
     await press(/United Kingdom/);
     await press(/ATS/);
     await userEvent.type(minutes(), "20");
-    await screen.findByText("1:05");
 
-    expect(convertTime).toHaveBeenLastCalledWith(
-      expect.objectContaining({ game: "ats", region: "mainland" }),
-    );
+    expect(screen.getByText("0:01:00")).toBeInTheDocument();
+    expect(screen.getByText("1 real minute = 20 game minutes")).toBeInTheDocument();
+  });
+
+  it("recalculates immediately when the mode changes", async () => {
+    await renderApp();
+    await userEvent.type(minutes(), "30");
+    expect(screen.getByText("0:01:30")).toBeInTheDocument(); // 30 / 20
+
+    await press(/Inside a city/);
+    expect(screen.getByText("0:10:00")).toBeInTheDocument(); // 30 / 3
   });
 
   it.each([
-    ["30 min", 30],
-    ["1 h", 60],
-    ["2 h", 120],
-    ["6 h", 360],
-    ["12 h", 720],
-    ["24 h", 1440],
-  ])("quick pick %s sends %d minutes", async (label, total) => {
+    ["30 min", "0:01:30"],
+    ["1 h", "0:03:00"],
+    ["2 h", "0:06:00"],
+    ["6 h", "0:18:00"],
+    ["12 h", "0:36:00"],
+    ["24 h", "1:12:00"],
+  ])("quick pick %s gives %s", async (label, expected) => {
     await renderApp();
     await press(label);
-    await screen.findByText("1:05");
 
-    expect(convertTime).toHaveBeenLastCalledWith(expect.objectContaining({ minutes: total }));
-    expect(hours()).toHaveValue(String(Math.floor(total / 60)));
-    expect(minutes()).toHaveValue(String(total % 60));
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  it("shows the quick pick in the inputs", async () => {
+    await renderApp();
+    await press("12 h");
+
+    expect(hours()).toHaveValue("12");
+    expect(minutes()).toHaveValue("0");
   });
 
   it("steps hours by 1 and minutes by 5", async () => {
@@ -199,7 +194,7 @@ describe("TsConverter", () => {
   it("clear button empties the inputs and the result", async () => {
     await renderApp();
     await userEvent.type(minutes(), "10");
-    await screen.findByText("1:05");
+    expect(screen.getByText("0:00:30")).toBeInTheDocument();
 
     await press("Clear");
 
@@ -207,37 +202,13 @@ describe("TsConverter", () => {
     expect(screen.getByText("Enter the in-game time to see the result.")).toBeInTheDocument();
   });
 
-  it("shows an error and retries", async () => {
-    convertTime.mockResolvedValueOnce(null);
+  it("handles the largest input without overflowing the layout text", async () => {
     await renderApp();
-    await userEvent.type(minutes(), "10");
+    await userEvent.type(hours(), "999");
+    await press(/Inside a city/);
 
-    expect(await screen.findByText("Couldn't fetch the result.")).toBeInTheDocument();
-
-    await press("Try again");
-
-    expect(await screen.findByText("1:05")).toBeInTheDocument();
-    expect(convertTime).toHaveBeenCalledTimes(2);
-  });
-
-  it("ignores a slow response for input that has since changed", async () => {
-    let resolveFirst: (v: TimeConverterDto) => void = () => {};
-    convertTime.mockImplementationOnce(
-      () => new Promise<TimeConverterDto>((r) => (resolveFirst = r)),
-    );
-    convertTime.mockResolvedValueOnce({ Hours: 9, Minutes: 9 });
-    await renderApp();
-
-    await userEvent.type(minutes(), "1");
-    await waitFor(() => expect(convertTime).toHaveBeenCalledTimes(1));
-    await userEvent.type(minutes(), "0");
-    await screen.findByText("9:09");
-
-    resolveFirst({ Hours: 1, Minutes: 1 });
-    await new Promise((r) => setTimeout(r, 20));
-
-    expect(screen.getByText("9:09")).toBeInTheDocument();
-    expect(screen.queryByText("1:01")).not.toBeInTheDocument();
+    // 999 h * 60 / 3 = 19980 real minutes = 333 h
+    expect(screen.getByText("333:00:00")).toBeInTheDocument();
   });
 
   describe("language", () => {
@@ -268,9 +239,9 @@ describe("TsConverter", () => {
       expect(document.documentElement.lang).toBe("en");
 
       await userEvent.type(minutes(), "10");
-      await screen.findByText("1 h 5 min");
+      expect(screen.getByText("0 h 0 min 30 s")).toBeInTheDocument();
       await press("PL");
-      expect(screen.getByText("1 godz. 5 min")).toBeInTheDocument();
+      expect(screen.getByText("0 godz. 0 min 30 s")).toBeInTheDocument();
       expect(screen.getByText("Z 0 godz. 10 min w grze")).toBeInTheDocument();
     });
   });

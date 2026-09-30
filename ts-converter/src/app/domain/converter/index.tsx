@@ -6,6 +6,7 @@ import NumberStepper from "@/app/components/NumberStepper/NumberStepper";
 import ResultPanel from "@/app/components/ResultPanel/ResultPanel";
 import SegmentedControl from "@/app/components/SegmentedControl/SegmentedControl";
 import { useLanguage } from "@/app/i18n/LanguageProvider";
+import { convertToRealTime } from "./conversion";
 import { Area, Game, getRate, isRegionRelevant, Region } from "./rates";
 import {
   normalizeHours,
@@ -14,7 +15,6 @@ import {
   stepMinutes,
   toTotalMinutes,
 } from "./timeInput";
-import { useConversion } from "./useConversion";
 
 /** In-game minutes offered as one-tap presets. */
 export const QUICK_PICKS = [30, 60, 120, 360, 720, 1440];
@@ -35,11 +35,9 @@ const TsConverter: FC = () => {
   const hasInput = hours !== "" || minutes !== "";
   const totalMinutes = toTotalMinutes(hours, minutes);
 
-  const { state, retry } = useConversion(
-    hasInput
-      ? { game, area, region: effectiveRegion, minutes: totalMinutes }
-      : null,
-  );
+  const result = hasInput
+    ? convertToRealTime(game, area, effectiveRegion, totalMinutes)
+    : null;
 
   const reset = () => {
     setHours("");
@@ -135,12 +133,11 @@ const TsConverter: FC = () => {
         </section>
 
         <ResultPanel
-          state={state}
+          result={result}
           rate={getRate(game, area, effectiveRegion)}
           inputHours={Math.floor(totalMinutes / 60)}
           inputMinutes={totalMinutes % 60}
           onReset={reset}
-          onRetry={retry}
         />
       </main>
     </div>

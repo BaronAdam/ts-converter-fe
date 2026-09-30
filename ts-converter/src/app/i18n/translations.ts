@@ -26,9 +26,6 @@ export type Translations = {
   quick: string;
   resultLabel: string;
   empty: string;
-  calculating: string;
-  error: string;
-  retry: string;
   reset: string;
   langLabel: string;
   themeLabel: string;
@@ -37,7 +34,7 @@ export type Translations = {
   minutesDec: string;
   minutesInc: string;
   rate: (gameMinutes: number) => string;
-  real: (hours: number, minutes: number) => string;
+  real: (hours: number, minutes: number, seconds: number) => string;
   from: (hours: number, minutes: number) => string;
 };
 
@@ -64,9 +61,6 @@ export const translations: Record<Language, Translations> = {
     quick: "Szybki wybór",
     resultLabel: "Pozostały czas rzeczywisty",
     empty: "Wpisz czas z gry, aby zobaczyć wynik.",
-    calculating: "Liczenie…",
-    error: "Nie udało się pobrać wyniku.",
-    retry: "Spróbuj ponownie",
     reset: "Wyczyść",
     langLabel: "Język",
     themeLabel: "Przełącz motyw jasny/ciemny",
@@ -75,7 +69,7 @@ export const translations: Record<Language, Translations> = {
     minutesDec: "Zmniejsz liczbę minut",
     minutesInc: "Zwiększ liczbę minut",
     rate: (n) => `1 min rzeczywista = ${n} min w grze`,
-    real: (h, m) => `${h} godz. ${m} min`,
+    real: (h, m, s) => `${h} godz. ${m} min ${s} s`,
     from: (h, m) => `Z ${h} godz. ${m} min w grze`,
   },
   en: {
@@ -100,9 +94,6 @@ export const translations: Record<Language, Translations> = {
     quick: "Quick pick",
     resultLabel: "Real time left",
     empty: "Enter the in-game time to see the result.",
-    calculating: "Calculating…",
-    error: "Couldn't fetch the result.",
-    retry: "Try again",
     reset: "Clear",
     langLabel: "Language",
     themeLabel: "Switch light/dark theme",
@@ -111,7 +102,7 @@ export const translations: Record<Language, Translations> = {
     minutesDec: "Decrease minutes",
     minutesInc: "Increase minutes",
     rate: (n) => `1 real minute = ${n} game minutes`,
-    real: (h, m) => `${h} h ${m} min`,
+    real: (h, m, s) => `${h} h ${m} min ${s} s`,
     from: (h, m) => `From ${h} h ${m} min in game`,
   },
 };

@@ -20,8 +20,8 @@ describe("translations", () => {
   });
 
   it("formats interpolated messages", () => {
-    expect(translations.pl.real(1, 5)).toBe("1 godz. 5 min");
-    expect(translations.en.real(1, 5)).toBe("1 h 5 min");
+    expect(translations.pl.real(1, 5, 9)).toBe("1 godz. 5 min 9 s");
+    expect(translations.en.real(1, 5, 9)).toBe("1 h 5 min 9 s");
     expect(translations.pl.rate(20)).toContain("20");
     expect(translations.en.from(2, 30)).toContain("2 h 30 min");
   });
