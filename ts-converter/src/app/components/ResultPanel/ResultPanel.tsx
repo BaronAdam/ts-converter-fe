@@ -1,13 +1,15 @@
 "use client";
 
 import { FC } from "react";
-import { Duration, formatDuration } from "@/app/domain/converter/conversion";
+import { Duration, formatDuration, getArrival } from "@/app/domain/converter/conversion";
 import { useLanguage } from "@/app/i18n/LanguageProvider";
 
 type ResultPanelProps = {
   /** Real time left, or null while nothing has been entered. */
   result: Duration | null;
   rate: number;
+  /** Epoch ms when the inputs were last changed; the arrival is measured from it. */
+  calculatedAt: number;
   inputHours: number;
   inputMinutes: number;
   onReset: () => void;
@@ -18,6 +20,7 @@ const EMPTY_RESULT = "–:––:––";
 const ResultPanel: FC<ResultPanelProps> = ({
   result,
   rate,
+  calculatedAt,
   inputHours,
   inputMinutes,
   onReset,
@@ -25,6 +28,7 @@ const ResultPanel: FC<ResultPanelProps> = ({
   const { t } = useLanguage();
 
   const text = result ? formatDuration(result) : EMPTY_RESULT;
+  const arrival = result ? getArrival(calculatedAt, result) : null;
   // long results (hundreds of hours) need a smaller size to fit the panel
   const sizeClass =
     text.length > 8
@@ -50,11 +54,11 @@ const ResultPanel: FC<ResultPanelProps> = ({
           {text}
         </div>
 
-        {result ? (
+        {arrival ? (
           <div className="flex flex-col gap-0.5">
             <p className="text-[17px] font-semibold sm:text-[22px]">
               <span className="lang-fade">
-                {t.real(result.hours, result.minutes, result.seconds)}
+                {t.arrival(arrival.time, arrival.days)}
               </span>
             </p>
             <p className="text-sm opacity-80 sm:text-base">

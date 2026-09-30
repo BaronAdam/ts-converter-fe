@@ -37,6 +37,7 @@ const setReducedMotion = (reduce: boolean) => {
 };
 
 afterEach(() => {
+  vi.useRealTimers();
   // @ts-expect-error restore jsdom's default (no matchMedia)
   delete window.matchMedia;
   document.documentElement.removeAttribute("data-lang-fading");
@@ -58,6 +59,9 @@ const stubViewTransition = () => {
 };
 
 beforeEach(() => {
+  // only Date is faked, so timers and user-event keep running normally
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 8, 30, 12, 0, 0));
   window.localStorage.clear();
   document.documentElement.classList.remove("dark");
 });
@@ -77,9 +81,50 @@ describe("TsConverter", () => {
 
     // 90 game minutes / 20 = 4.5 real minutes
     expect(screen.getByText("0:04:30")).toBeInTheDocument();
-    expect(screen.getByText("0 h 4 min 30 s")).toBeInTheDocument();
+    expect(screen.getByText("You'll arrive at 12:04:30")).toBeInTheDocument();
+    // the big figure is not repeated as words underneath
+    expect(screen.queryByText(/\d+ h \d+ min \d+ s/)).not.toBeInTheDocument();
     expect(screen.getByText("From 1 h 30 min in game")).toBeInTheDocument();
     expect(screen.getByText("1 real minute = 20 game minutes")).toBeInTheDocument();
+  });
+
+  it("says tomorrow when the trip crosses midnight", async () => {
+    vi.setSystemTime(new Date(2026, 8, 30, 23, 59, 0));
+    await renderApp();
+    await press("30 min"); // 30 / 20 = 90 s
+
+    expect(screen.getByText("You'll arrive at 00:00:30 (tomorrow)")).toBeInTheDocument();
+  });
+
+  it("says how many days away a long trip ends", async () => {
+    await renderApp();
+    await userEvent.type(hours(), "999");
+    await press(/Inside a city/); // 333 h
+
+    expect(screen.getByText("You'll arrive at 09:00:00 (in 14 days)")).toBeInTheDocument();
+  });
+
+  it("measures the arrival from when the inputs last changed, not from the clock", async () => {
+    await renderApp();
+    await press("30 min");
+    expect(screen.getByText("You'll arrive at 12:01:30")).toBeInTheDocument();
+
+    // an hour passes with nothing touched: the arrival must not drift
+    vi.setSystemTime(new Date(2026, 8, 30, 13, 0, 0));
+    expect(screen.getByText("You'll arrive at 12:01:30")).toBeInTheDocument();
+
+    // changing an input recalculates from the current time
+    await press("1 h");
+    expect(screen.getByText("You'll arrive at 13:03:00")).toBeInTheDocument();
+  });
+
+  it("recalculates from the current time when only the mode changes", async () => {
+    await renderApp();
+    await press("30 min");
+    vi.setSystemTime(new Date(2026, 8, 30, 14, 0, 0));
+    await press(/Inside a city/); // 30 / 3 = 10 min
+
+    expect(screen.getByText("You'll arrive at 14:10:00")).toBeInTheDocument();
   });
 
   it("shows fractions of a minute as seconds", async () => {
@@ -239,9 +284,9 @@ describe("TsConverter", () => {
       expect(document.documentElement.lang).toBe("en");
 
       await userEvent.type(minutes(), "10");
-      expect(screen.getByText("0 h 0 min 30 s")).toBeInTheDocument();
+      expect(screen.getByText("You'll arrive at 12:00:30")).toBeInTheDocument();
       await press("PL");
-      expect(screen.getByText("0 godz. 0 min 30 s")).toBeInTheDocument();
+      expect(screen.getByText("Będziesz na miejscu o 12:00:30")).toBeInTheDocument();
       expect(screen.getByText("Z 0 godz. 10 min w grze")).toBeInTheDocument();
     });
   });

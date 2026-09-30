@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { convertToRealTime, formatDuration, toDuration } from "./conversion";
+import {
+  convertToRealTime,
+  formatDuration,
+  getArrival,
+  toDuration,
+  toSeconds,
+} from "./conversion";
 
 describe("toDuration", () => {
   it.each([
@@ -79,5 +85,75 @@ describe("formatDuration", () => {
     [{ hours: 333, minutes: 0, seconds: 0 }, "333:00:00"],
   ])("%o -> %s", (duration, expected) => {
     expect(formatDuration(duration)).toBe(expected);
+  });
+});
+
+describe("toSeconds", () => {
+  it("is the inverse of toDuration", () => {
+    for (const seconds of [0, 1, 59, 60, 3599, 3600, 86399, 1_198_800]) {
+      expect(toSeconds(toDuration(seconds))).toBe(seconds);
+    }
+  });
+});
+
+describe("getArrival", () => {
+  const at = (h: number, m: number, s = 0) => new Date(2026, 8, 30, h, m, s).getTime();
+
+  it("adds the real duration to the start time", () => {
+    expect(getArrival(at(12, 0), { hours: 0, minutes: 4, seconds: 30 })).toEqual({
+      time: "12:04:30",
+      days: 0,
+    });
+  });
+
+  it("rolls over the hour and pads with zeros", () => {
+    expect(getArrival(at(9, 59, 58), { hours: 0, minutes: 0, seconds: 7 })).toEqual({
+      time: "10:00:05",
+      days: 0,
+    });
+  });
+
+  it("stays on the same day up to 23:59:59", () => {
+    expect(getArrival(at(12, 0), { hours: 11, minutes: 59, seconds: 59 })).toEqual({
+      time: "23:59:59",
+      days: 0,
+    });
+  });
+
+  it("counts crossing midnight as the next day", () => {
+    expect(getArrival(at(23, 59), { hours: 0, minutes: 0, seconds: 30 }).days).toBe(0);
+    expect(getArrival(at(23, 59), { hours: 0, minutes: 1, seconds: 0 })).toEqual({
+      time: "00:00:00",
+      days: 1,
+    });
+  });
+
+  it("counts calendar days, not 24-hour blocks", () => {
+    // 23:00 + 26 h passes midnight twice (23:00 -> 01:00 -> the day after), i.e. 2 calendar days on
+    expect(getArrival(at(23, 0), { hours: 26, minutes: 0, seconds: 0 })).toEqual({
+      time: "01:00:00",
+      days: 2,
+    });
+    expect(getArrival(at(0, 30), { hours: 23, minutes: 0, seconds: 0 })).toEqual({
+      time: "23:30:00",
+      days: 0,
+    });
+  });
+
+  it("handles multi-day trips and month ends", () => {
+    // 333 h = 13 days + 21 h, so 12:00 lands at 09:00 on day 14
+    expect(getArrival(at(12, 0), { hours: 333, minutes: 0, seconds: 0 })).toEqual({
+      time: "09:00:00",
+      days: 14,
+    });
+    // 30 Sep + 1 day = 1 Oct
+    expect(getArrival(at(20, 0), { hours: 5, minutes: 0, seconds: 0 }).days).toBe(1);
+  });
+
+  it("returns the start time for a zero duration", () => {
+    expect(getArrival(at(8, 15, 3), { hours: 0, minutes: 0, seconds: 0 })).toEqual({
+      time: "08:15:03",
+      days: 0,
+    });
   });
 });

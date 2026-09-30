@@ -29,6 +29,16 @@ const TsConverter: FC = () => {
   const [region, setRegion] = useState<Region>("mainland");
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("");
+  // When the inputs last changed. The arrival is measured from this moment, so
+  // it stays put while the page sits open (the in-game time left doesn't move).
+  const [calculatedAt, setCalculatedAt] = useState(0);
+
+  const changed =
+    <A extends unknown[]>(update: (...args: A) => void) =>
+    (...args: A) => {
+      update(...args);
+      setCalculatedAt(Date.now());
+    };
 
   const showRegion = isRegionRelevant(game, area);
   const effectiveRegion: Region = showRegion ? region : "mainland";
@@ -39,10 +49,10 @@ const TsConverter: FC = () => {
     ? convertToRealTime(game, area, effectiveRegion, totalMinutes)
     : null;
 
-  const reset = () => {
+  const reset = changed(() => {
     setHours("");
     setMinutes("");
-  };
+  });
 
   const quickLabel = (mins: number) =>
     mins < 60 ? `${mins} ${t.unitMinutes}` : `${mins / 60} ${t.unitHours}`;
@@ -57,7 +67,7 @@ const TsConverter: FC = () => {
             label={t.gameLabel}
             emphasis
             value={game}
-            onChange={setGame}
+            onChange={changed(setGame)}
             options={[
               { value: "ats", label: "ATS", hint: t.usa },
               { value: "ets", label: "ETS", hint: t.europe },
@@ -67,7 +77,7 @@ const TsConverter: FC = () => {
           <SegmentedControl<Area>
             label={t.areaLabel}
             value={area}
-            onChange={setArea}
+            onChange={changed(setArea)}
             options={[
               { value: "outside", label: t.outside, hint: t.outsideHint },
               { value: "city", label: t.city, hint: t.cityHint },
@@ -78,7 +88,7 @@ const TsConverter: FC = () => {
             <SegmentedControl<Region>
               label={t.regionLabel}
               value={region}
-              onChange={setRegion}
+              onChange={changed(setRegion)}
               options={[
                 { value: "mainland", label: t.mainland },
                 { value: "uk", label: t.uk },
@@ -93,8 +103,8 @@ const TsConverter: FC = () => {
                 id="hours-input"
                 label={t.hours}
                 value={hours}
-                onChange={(v) => setHours(normalizeHours(v))}
-                onStep={(delta) => setHours(stepHours(hours, delta))}
+                onChange={changed((v: string) => setHours(normalizeHours(v)))}
+                onStep={changed((delta: number) => setHours(stepHours(hours, delta)))}
                 step={1}
                 decLabel={t.hoursDec}
                 incLabel={t.hoursInc}
@@ -103,8 +113,10 @@ const TsConverter: FC = () => {
                 id="minutes-input"
                 label={t.minutes}
                 value={minutes}
-                onChange={(v) => setMinutes(normalizeMinutes(v))}
-                onStep={(delta) => setMinutes(stepMinutes(minutes, delta))}
+                onChange={changed((v: string) => setMinutes(normalizeMinutes(v)))}
+                onStep={changed((delta: number) =>
+                  setMinutes(stepMinutes(minutes, delta)),
+                )}
                 step={5}
                 decLabel={t.minutesDec}
                 incLabel={t.minutesInc}
@@ -119,10 +131,10 @@ const TsConverter: FC = () => {
                 <button
                   key={mins}
                   type="button"
-                  onClick={() => {
+                  onClick={changed(() => {
                     setHours(String(Math.floor(mins / 60)));
                     setMinutes(String(mins % 60));
-                  }}
+                  })}
                   className="h-11 rounded-full border-[1.5px] border-line bg-transparent px-3.5 text-sm font-semibold text-ink sm:h-10 sm:px-4 sm:text-[15px]"
                 >
                   <span className="lang-fade">{quickLabel(mins)}</span>
@@ -135,6 +147,7 @@ const TsConverter: FC = () => {
         <ResultPanel
           result={result}
           rate={getRate(game, area, effectiveRegion)}
+          calculatedAt={calculatedAt}
           inputHours={Math.floor(totalMinutes / 60)}
           inputMinutes={totalMinutes % 60}
           onReset={reset}

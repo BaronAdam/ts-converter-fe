@@ -34,9 +34,15 @@ export type Translations = {
   minutesDec: string;
   minutesInc: string;
   rate: (gameMinutes: number) => string;
-  real: (hours: number, minutes: number, seconds: number) => string;
+  arrival: (time: string, days: number) => string;
   from: (hours: number, minutes: number) => string;
 };
+
+const plDay = (days: number): string =>
+  days <= 0 ? "" : days === 1 ? " (jutro)" : days === 2 ? " (pojutrze)" : ` (za ${days} dni)`;
+
+const enDay = (days: number): string =>
+  days <= 0 ? "" : days === 1 ? " (tomorrow)" : ` (in ${days} days)`;
 
 export const translations: Record<Language, Translations> = {
   pl: {
@@ -69,7 +75,7 @@ export const translations: Record<Language, Translations> = {
     minutesDec: "Zmniejsz liczbę minut",
     minutesInc: "Zwiększ liczbę minut",
     rate: (n) => `1 min rzeczywista = ${n} min w grze`,
-    real: (h, m, s) => `${h} godz. ${m} min ${s} s`,
+    arrival: (time, days) => `Będziesz na miejscu o ${time}${plDay(days)}`,
     from: (h, m) => `Z ${h} godz. ${m} min w grze`,
   },
   en: {
@@ -102,7 +108,7 @@ export const translations: Record<Language, Translations> = {
     minutesDec: "Decrease minutes",
     minutesInc: "Increase minutes",
     rate: (n) => `1 real minute = ${n} game minutes`,
-    real: (h, m, s) => `${h} h ${m} min ${s} s`,
+    arrival: (time, days) => `You'll arrive at ${time}${enDay(days)}`,
     from: (h, m) => `From ${h} h ${m} min in game`,
   },
 };
