@@ -41,8 +41,8 @@
       "form_factor": "wide"
     }
   ],
-  "theme_color": "#FFFFFF",
-  "background_color": "#FFFFFF",
+  "theme_color": "#FFB020",
+  "background_color": "#F4F1EA",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
